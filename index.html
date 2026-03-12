@@ -296,20 +296,54 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
   color: rgba(255,255,255,0.45);
 }
 
-/* ---- Rules ---- */
-.rules-box {
-  width: 100%;
-  max-width: 680px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-size: 0.8rem;
-  line-height: 1.7;
-  color: rgba(255,255,255,0.8);
+/* ---- Rules modal ---- */
+#rules-overlay {
   display: none;
-  margin-top: 10px;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
-.rules-box.open { display: block; }
+#rules-overlay.open { display: flex; }
+.rules-modal {
+  background: #1b4d2e;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 14px;
+  padding: 24px 26px;
+  max-width: 560px;
+  width: 100%;
+  font-size: 0.85rem;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.88);
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.rules-modal h2 {
+  font-size: 1.1rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  color: #fff;
+}
+.rules-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.12s;
+}
+.rules-close:hover { color: #fff; }
 
 /* ---- Splash screen ---- */
 .splash {
@@ -436,6 +470,38 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
   z-index: 700;
   will-change: transform, top, left;
 }
+
+/* ---- Snap ---- */
+@keyframes snap-pulse {
+  0%,100% { box-shadow: 0 0 0 3px #ffd700, 0 4px 14px rgba(0,0,0,0.4); }
+  50%      { box-shadow: 0 0 0 7px rgba(255,215,0,0.55), 0 4px 14px rgba(0,0,0,0.4); }
+}
+.snap-ready {
+  animation: snap-pulse 0.65s ease-in-out infinite;
+  cursor: pointer !important;
+}
+@keyframes snap-banner-in {
+  from { transform: translate(-50%,-50%) scale(0.7); opacity: 0; }
+  to   { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+}
+#snap-banner {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: linear-gradient(135deg,#e65100,#f57f17);
+  color: #fff;
+  padding: 14px 32px;
+  border-radius: 14px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+  z-index: 950;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.55);
+  pointer-events: none;
+  animation: snap-banner-in 0.2s ease-out;
+  line-height: 1.5;
+}
 </style>
 </head>
 <body>
@@ -455,16 +521,20 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
 
 <div class="game-area" id="ga"></div>
 
-<div class="rules-box" id="rulesBox">
-  <strong>How to play:</strong><br>
-  Draw a card from the deck or discard pile each turn. Swap it with one of your face-down cards, or discard it.<br>
-  Call <strong>Cambio</strong> instead of drawing — everyone else gets one final turn, then lowest score wins.<br><br>
-  <strong>Special cards (trigger when discarded):</strong><br>
-  10 → Peek at one of your own cards &nbsp;|&nbsp;
-  J → Blind swap one of your cards with opponent's &nbsp;|&nbsp;
-  Q → Peek at one of the opponent's cards &nbsp;|&nbsp;
-  K → Peek opponent's card, optionally swap<br><br>
-  <strong>Scoring:</strong> A=1, 2–9=face value, 10/J/Q/K=10, K♥=−1, Joker=0. Lowest total wins.
+<div id="rules-overlay" onclick="if(event.target===this)toggleRules()">
+  <div class="rules-modal">
+    <button class="rules-close" onclick="toggleRules()">&#x2715;</button>
+    <h2>How to Play</h2>
+    Draw a card from the deck or discard pile each turn. Swap it with one of your face-down cards, or discard it.<br>
+    Call <strong>Cambio</strong> instead of drawing — everyone else gets one final turn, then lowest score wins.<br><br>
+    <strong>Special cards</strong> (only trigger when discarded from deck draw):<br>
+    10 → Peek at one of your own cards<br>
+    J → Blind swap one of your cards with opponent's<br>
+    Q → Peek at one of the opponent's cards<br>
+    K → Peek opponent's card, optionally swap<br><br>
+    <strong>Snap:</strong> After any discard, click one of your own cards if it matches the discarded value — correct snap removes it from your hand. Wrong snap adds 2 penalty cards. You cannot snap the card you just put down.<br><br>
+    <strong>Scoring:</strong> A=1 · 2–9=face value · 10/J/Q/K=10 · K♥=−1 · Joker=0. Lowest total wins.
+  </div>
 </div>
 
 <script>
@@ -519,11 +589,18 @@ const G = {
   animating:false,
   lastMove:'',
   playerMove:'',
-  difficulty:'easy'
+  difficulty:'easy',
+  snapActive:false,
+  snapValue:null,
+  snapResolved:false,
+  snapResumeFn:null,
+  _snapCompTimer:null,
+  _snapWindowTimer:null
 };
 
 // ── Splash screen ────────────────────────────────────────
 function setDifficulty(d) {
+  if (G.phase !== 'start') return;
   G.difficulty = d;
   document.querySelectorAll('.diff-btn').forEach(b => {
     b.classList.remove('diff-active');
@@ -532,8 +609,13 @@ function setDifficulty(d) {
   btn.classList.add('diff-active', d);
 }
 
+function lockDifficulty(locked) {
+  document.querySelectorAll('.diff-btn').forEach(b => { b.disabled = locked; });
+}
+
 function showSplash() {
   G.phase='start';
+  lockDifficulty(false);
   const deckCards = [
     {rot:-8,tx:-8},{rot:-4,tx:-4},{rot:0,tx:0},{rot:4,tx:4},{rot:8,tx:8}
   ];
@@ -578,7 +660,11 @@ function startNewGame() {
   G.cKnown={}; G.cKnownP={}; G.pKnown={}; G.lastMove=''; G.playerMove='';
   G.bsOwnIdx=null; G.peekOppIdx=null;
   G.peekingIdx=null; G.peekingOppIdx=null; G.turns=0;
+  clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
+  G.snapActive=false; G.snapValue=null; G.snapResolved=false; G.snapResumeFn=null;
+  const snapBanner=document.getElementById('snap-banner'); if(snapBanner) snapBanner.remove();
   G.msg='Dealing...';
+  lockDifficulty(true);
 
   // Render the layout with hidden card slots
   renderDealing();
@@ -777,6 +863,87 @@ function animateSwap(id1, id2, callback) {
   }, 420);
 }
 
+// ── Snap helpers ─────────────────────────────────────────
+function removePlayerCard(idx) {
+  G.pCards.splice(idx,1);
+  const kn={};
+  Object.entries(G.pKnown).forEach(([k,v])=>{const ki=+k;if(ki<idx)kn[ki]=v;else if(ki>idx)kn[ki-1]=v;});
+  G.pKnown=kn;
+}
+function removeComputerCard(idx) {
+  G.cCards.splice(idx,1);
+  const kn={},kp={};
+  Object.entries(G.cKnown).forEach(([k,v])=>{const ki=+k;if(ki<idx)kn[ki]=v;else if(ki>idx)kn[ki-1]=v;});
+  Object.entries(G.cKnownP).forEach(([k,v])=>{const ki=+k;if(ki<idx)kp[ki]=v;else if(ki>idx)kp[ki-1]=v;});
+  G.cKnown=kn; G.cKnownP=kp;
+}
+function showSnapBanner(text) {
+  let el=document.getElementById('snap-banner');
+  if(el) el.remove();
+  el=document.createElement('div'); el.id='snap-banner';
+  el.innerHTML=text;
+  document.body.appendChild(el);
+}
+function closeSnapWindow() {
+  if (!G.snapActive) return;
+  G.snapActive=false; G.snapValue=null;
+  clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
+  const el=document.getElementById('snap-banner'); if(el) el.remove();
+  const fn=G.snapResumeFn; G.snapResumeFn=null;
+  render();
+  if(fn) fn();
+}
+function triggerSnapWindow(card, resumeFn) {
+  if(['start','dealing','game_over','revealing'].includes(G.phase)){ resumeFn(); return; }
+  G.snapActive=true; G.snapValue=card.value; G.snapResolved=false; G.snapResumeFn=resumeFn;
+  render();
+  const delay=G.difficulty==='easy'?3000:G.difficulty==='hard'?500:2000;
+  G._snapCompTimer=setTimeout(()=>{ if(!G.snapResolved&&G.snapActive) computerTrySnap(); },delay);
+  G._snapWindowTimer=setTimeout(()=>{ closeSnapWindow(); },4000);
+}
+function playerTrySnap(idx) {
+  if(!G.snapActive||G.snapResolved) return;
+  const card=G.pCards[idx].card;
+  if(card.value===G.snapValue) {
+    G.snapResolved=true;
+    clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
+    showSnapBanner(`✓ SNAP! You removed card ${idx+1} (${fmt(card)})!`);
+    removePlayerCard(idx);
+    G.msg=`You snapped and removed card ${idx+1}!`;
+    render();
+    setTimeout(()=>{
+      const el=document.getElementById('snap-banner'); if(el) el.remove();
+      G.snapActive=false; G.snapValue=null;
+      const fn=G.snapResumeFn; G.snapResumeFn=null;
+      render(); if(fn) fn();
+    },1200);
+  } else {
+    // Wrong snap — 2 penalty cards
+    for(let i=0;i<2;i++){if(!G.deck.length)reshuffleDiscard();if(G.deck.length)G.pCards.push({card:G.deck.pop(),faceUp:false});}
+    showSnapBanner(`✗ Wrong snap! You got +2 penalty cards`);
+    G.msg=`Wrong snap! +2 penalty cards added to your hand.`;
+    render();
+  }
+}
+function computerTrySnap() {
+  if(!G.snapActive||G.snapResolved) return;
+  const match=Object.entries(G.cKnown).find(([,v])=>v===G.snapValue);
+  if(!match) return;
+  const idx=+match[0];
+  G.snapResolved=true;
+  clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
+  showSnapBanner(`⚡ Computer SNAPPED! Removes its card ${idx+1}`);
+  removeComputerCard(idx);
+  G.msg=`Computer snapped and removed its card ${idx+1}!`;
+  render();
+  setTimeout(()=>{
+    const el=document.getElementById('snap-banner'); if(el) el.remove();
+    G.snapActive=false; G.snapValue=null;
+    const fn=G.snapResumeFn; G.snapResumeFn=null;
+    render(); if(fn) fn();
+  },1200);
+}
+
 function finishDealing() {
   G.animating = false;
   G.phase = 'player_draw';
@@ -787,6 +954,7 @@ function finishDealing() {
 
 // ── Player actions ───────────────────────────────────────
 function drawDeck() {
+  if (G.snapActive) return;
   if (G.phase!=='player_draw') return;
   if (!G.deck.length) reshuffleDiscard();
   if (!G.deck.length) { endGame(); return; }
@@ -805,6 +973,7 @@ function drawDeck() {
   animatePileToDraw(srcRect);
 }
 function drawDiscard() {
+  if (G.snapActive) return;
   if (G.phase!=='player_draw'||!G.discard.length) return;
   const srcRect = getRect('discard-card');
   G.drawn = G.discard.pop();
@@ -815,7 +984,9 @@ function drawDiscard() {
   animatePileToDraw(srcRect);
 }
 function doDiscard() {
+  if (G.snapActive) return;
   if (G.phase!=='player_action') return;
+  if (G.drawnFrom==='discard') return;
   const c=G.drawn; G.drawn=null;
   G.discard.push(c);
   const ab = G.drawnFrom==='deck' ? ability(c.rank) : null;
@@ -824,7 +995,8 @@ function doDiscard() {
   else if (ab==='peek_opp')   G.playerMove=`You discarded ${fmt(c)} — peeking computer's card.`;
   else if (ab==='peek_swap')  G.playerMove=`You discarded ${fmt(c)} — peek & swap activated.`;
   else                        G.playerMove=`You discarded ${fmt(c)}.`;
-  triggerAbility(ab);
+  render();
+  triggerSnapWindow(c, ()=>triggerAbility(ab));
 }
 function triggerAbility(ab) {
   if (!ab) { endPlayerTurn(); return; }
@@ -836,6 +1008,7 @@ function triggerAbility(ab) {
 }
 
 function clickPC(idx) {
+  if (G.snapActive) { playerTrySnap(idx); return; }
   if (G.phase==='player_action') {
     const drawnRect = getRect('drawn-card');
     const slotRect  = getRect('pc-'+idx);
@@ -846,7 +1019,7 @@ function clickPC(idx) {
       delete G.pKnown[idx];
       G.drawn=null;
       G.discard.push(old);
-      endPlayerTurn();
+      triggerSnapWindow(old, ()=>endPlayerTurn());
     };
     if (drawnRect && slotRect) {
       const slotEl = document.getElementById('pc-'+idx);
@@ -884,6 +1057,7 @@ function clickPC(idx) {
 }
 
 function clickCC(idx) {
+  if (G.snapActive) return;
   if (G.phase==='player_bs_opp') {
     const oi=G.bsOwnIdx;
     G.bsOwnIdx=null;
@@ -930,6 +1104,7 @@ function skipKingSwap() {
   endPlayerTurn();
 }
 function callCambio() {
+  if (G.snapActive) return;
   if (G.phase!=='player_draw'||G.cambioBy) return;
   G.cambioBy='player';
   G.msg='You called CAMBIO! Computer gets one final turn...';
@@ -968,7 +1143,7 @@ function compTurn() {
     const d=G.difficulty;
     // Unknown card estimate: easy=6 (optimistic for player), medium=4.5, hard=3.5
     const unkEst = d==='easy' ? 6 : d==='hard' ? 3.5 : 4.5;
-    const estScore=kn.reduce((a,b)=>a+b,0)+(4-kn.length)*unkEst;
+    const estScore=kn.reduce((a,b)=>a+b,0)+(G.cCards.length-kn.length)*unkEst;
     const threshold = d==='easy' ? 15 : d==='medium' ? 6 : 2;
     const shouldCall = estScore < threshold;
     if (shouldCall) {
@@ -1003,18 +1178,20 @@ function compTurn() {
     const skipAbility = G.difficulty==='easy' && Math.random()<0.55;
     const ab = (compDrewFromDeck && !skipAbility) ? ability(drawn.rank) : null;
     let worstIdx=-1,worstVal=drawn.value;
-    for(let i=0;i<4;i++) {
+    for(let i=0;i<G.cCards.length;i++) {
       if(G.cKnown[i]!==undefined&&G.cKnown[i]>worstVal){worstVal=G.cKnown[i];worstIdx=i;}
     }
-    // Easy: 40% chance to ignore the optimal swap and just discard
-    if (worstIdx!==-1 && G.difficulty==='easy' && Math.random()<0.4) worstIdx=-1;
+    // Easy: 40% chance to ignore the optimal swap and just discard (only if drew from deck)
+    if (worstIdx!==-1 && compDrewFromDeck && G.difficulty==='easy' && Math.random()<0.4) worstIdx=-1;
+    // If drew from discard pile, must swap — force a random slot if no known worst card
+    if (!compDrewFromDeck && worstIdx===-1) worstIdx=0|Math.random()*G.cCards.length;
 
     // Human-like randomness: occasionally make a completely random move
     const randomThresh = G.difficulty==='hard' ? 0.05 : G.difficulty==='medium' ? 0.10 : 0.20;
     if (Math.random() < randomThresh) {
       if (Math.random() < 0.5) {
         // Random swap with any card
-        const randIdx = 0|Math.random()*4;
+        const randIdx = 0|Math.random()*G.cCards.length;
         const slotEl = document.getElementById('cc-'+randIdx);
         const slotRect = slotEl ? slotEl.getBoundingClientRect() : null;
         const doRandSwap = () => {
@@ -1023,17 +1200,20 @@ function compTurn() {
           G.cKnown[randIdx]=drawn.value;
           G.discard.push(old);
           G.msg=`Computer swaps card ${randIdx+1} (discards ${fmt(old)}).`;
-          compEndTurn(afterPlayerCambio);
+          render();
+          triggerSnapWindow(old, ()=>compEndTurn(afterPlayerCambio));
         };
         if (srcRect && slotRect && slotEl) {
           slotEl.style.visibility='hidden';
           flyCard(srcRect, slotRect, ()=>{ slotEl.style.visibility=''; doRandSwap(); }, 0.55);
         } else { doRandSwap(); }
-      } else {
-        // Random discard, no ability
+      } else if (compDrewFromDeck) {
+        // Random discard, no ability (only allowed when drew from deck)
         G.discard.push(drawn);
         G.msg=`Computer discards ${fmt(drawn)}.`;
-        compEndTurn(afterPlayerCambio);
+        render();
+        triggerSnapWindow(drawn, ()=>compEndTurn(afterPlayerCambio));
+        return;
       }
       return;
     }
@@ -1047,7 +1227,8 @@ function compTurn() {
         G.cKnown[worstIdx]=drawn.value;
         G.discard.push(old);
         G.msg=`Computer swaps card ${worstIdx+1} (discards ${fmt(old)}).`;
-        compEndTurn(afterPlayerCambio);
+        render();
+        triggerSnapWindow(old, ()=>compEndTurn(afterPlayerCambio));
       };
       if (srcRect && slotRect && slotEl) {
         slotEl.style.visibility='hidden';
@@ -1055,49 +1236,52 @@ function compTurn() {
       } else { doCompSwap(); }
     } else {
       G.discard.push(drawn);
-      if (ab==='peek_own') {
-        const unk=[0,1,2,3].filter(i=>G.cKnown[i]===undefined);
-        if (unk.length){const pi=unk[0|Math.random()*unk.length];G.cKnown[pi]=G.cCards[pi].card.value;}
-        G.msg=`Computer discards ${fmt(drawn)} and peeks at one of its own cards.`;
-        compEndTurn(afterPlayerCambio);
-      } else if (ab==='blind_swap') {
-        let swapOwn=0|Math.random()*4,bestBad=-Infinity;
-        for(let i=0;i<4;i++){if(G.cKnown[i]!==undefined&&G.cKnown[i]>bestBad){bestBad=G.cKnown[i];swapOwn=i;}}
-        const swapOpp=0|Math.random()*4;
-        G.msg=`Computer discards ${fmt(drawn)} — swapping its card ${swapOwn+1} with your card ${swapOpp+1}!`;
-        render();
-        animateSwap('cc-'+swapOwn, 'pc-'+swapOpp, ()=>{
-          const tmp=G.cCards[swapOwn].card;
-          G.cCards[swapOwn]={card:G.pCards[swapOpp].card,faceUp:false};
-          G.pCards[swapOpp]={card:tmp,faceUp:false};
-          delete G.cKnown[swapOwn]; delete G.pKnown[swapOpp];
+      render();
+      triggerSnapWindow(drawn, ()=>{
+        if (ab==='peek_own') {
+          const unk=Array.from({length:G.cCards.length},(_,i)=>i).filter(i=>G.cKnown[i]===undefined);
+          if (unk.length){const pi=unk[0|Math.random()*unk.length];G.cKnown[pi]=G.cCards[pi].card.value;}
+          G.msg=`Computer discards ${fmt(drawn)} and peeks at one of its own cards.`;
           compEndTurn(afterPlayerCambio);
-        });
-      } else if (ab==='peek_opp') {
-        // Queen: just peek a player card, no swap
-        const pi=0|Math.random()*4;
-        G.cKnownP[pi]=G.pCards[pi].card.value;
-        G.msg=`Computer discards ${fmt(drawn)} and peeks at your card ${pi+1}.`;
-        compEndTurn(afterPlayerCambio);
-      } else if (ab==='peek_swap') {
-        const pi=0|Math.random()*4, pv=G.pCards[pi].card.value;
-        G.cKnownP[pi]=pv;
-        let si=-1,sw=pv;
-        for(let i=0;i<4;i++){if(G.cKnown[i]!==undefined&&G.cKnown[i]>sw){sw=G.cKnown[i];si=i;}}
-        if (si!==-1) {
-          const tmp2=G.cCards[si].card;
-          G.cCards[si]={card:G.pCards[pi].card,faceUp:false};
-          G.pCards[pi]={card:tmp2,faceUp:false};
-          G.cKnown[si]=pv; delete G.pKnown[pi];
-          G.msg=`Computer discards ${fmt(drawn)}, peeks at your card, and swaps!`;
+        } else if (ab==='blind_swap') {
+          let swapOwn=0|Math.random()*G.cCards.length,bestBad=-Infinity;
+          for(let i=0;i<G.cCards.length;i++){if(G.cKnown[i]!==undefined&&G.cKnown[i]>bestBad){bestBad=G.cKnown[i];swapOwn=i;}}
+          const swapOpp=0|Math.random()*G.pCards.length;
+          G.msg=`Computer discards ${fmt(drawn)} — swapping its card ${swapOwn+1} with your card ${swapOpp+1}!`;
+          render();
+          animateSwap('cc-'+swapOwn, 'pc-'+swapOpp, ()=>{
+            const tmp=G.cCards[swapOwn].card;
+            G.cCards[swapOwn]={card:G.pCards[swapOpp].card,faceUp:false};
+            G.pCards[swapOpp]={card:tmp,faceUp:false};
+            delete G.cKnown[swapOwn]; delete G.pKnown[swapOpp];
+            compEndTurn(afterPlayerCambio);
+          });
+        } else if (ab==='peek_opp') {
+          // Queen: just peek a player card, no swap
+          const pi=0|Math.random()*G.pCards.length;
+          G.cKnownP[pi]=G.pCards[pi].card.value;
+          G.msg=`Computer discards ${fmt(drawn)} and peeks at your card ${pi+1}.`;
+          compEndTurn(afterPlayerCambio);
+        } else if (ab==='peek_swap') {
+          const pi=0|Math.random()*G.pCards.length, pv=G.pCards[pi].card.value;
+          G.cKnownP[pi]=pv;
+          let si=-1,sw=pv;
+          for(let i=0;i<G.cCards.length;i++){if(G.cKnown[i]!==undefined&&G.cKnown[i]>sw){sw=G.cKnown[i];si=i;}}
+          if (si!==-1) {
+            const tmp2=G.cCards[si].card;
+            G.cCards[si]={card:G.pCards[pi].card,faceUp:false};
+            G.pCards[pi]={card:tmp2,faceUp:false};
+            G.cKnown[si]=pv; delete G.pKnown[pi];
+            G.msg=`Computer discards ${fmt(drawn)}, peeks at your card, and swaps!`;
+          } else {
+            G.msg=`Computer discards ${fmt(drawn)} and peeks at one of your cards.`;
+          }
+          compEndTurn(afterPlayerCambio);
         } else {
-          G.msg=`Computer discards ${fmt(drawn)} and peeks at one of your cards.`;
+          G.msg=`Computer discards ${fmt(drawn)}.`;
+          compEndTurn(afterPlayerCambio);
         }
-        compEndTurn(afterPlayerCambio);
-      } else {
-        G.msg=`Computer discards ${fmt(drawn)}.`;
-        compEndTurn(afterPlayerCambio);
-      }
+      });
     }
   },700);
 }
@@ -1136,13 +1320,17 @@ function cardEl(slot, owner, idx) {
   const show=faceUp||isPeek;
 
   let sel=false,onclick='';
-  if (owner==='player') {
-    if (['player_action','player_peek_own','player_bs_own','player_peeking_opp'].includes(G.phase))
-      {sel=true; onclick=`clickPC(${idx})`;}
-  }
-  if (owner==='computer') {
-    if (['player_bs_opp','player_pk_opp','player_q_peek'].includes(G.phase))
-      {sel=true; onclick=`clickCC(${idx})`;}
+  if (G.snapActive && owner==='player') {
+    sel=true; onclick=`playerTrySnap(${idx})`;
+  } else {
+    if (owner==='player') {
+      if (['player_action','player_peek_own','player_bs_own','player_peeking_opp'].includes(G.phase))
+        {sel=true; onclick=`clickPC(${idx})`;}
+    }
+    if (owner==='computer') {
+      if (['player_bs_opp','player_pk_opp','player_q_peek'].includes(G.phase))
+        {sel=true; onclick=`clickCC(${idx})`;}
+    }
   }
   const selClass=(sel?'selectable ':'')+
     (G.phase==='player_bs_opp'&&owner==='player'&&G.bsOwnIdx===idx?'selected-own':'');
@@ -1161,7 +1349,8 @@ function cardEl(slot, owner, idx) {
   const badge=(owner==='player'&&!faceUp&&!isPeek&&G.pKnown[idx]!==undefined)
     ?`<div class="peek-badge">${G.pKnown[idx]}</div>`:'';
 
-  const numBadge=`<div class="card-num">${idx+1}</div>`;
+  const showScore=G.phase==='game_over'||G.phase==='revealing';
+  const numBadge=showScore?'':`<div class="card-num">${idx+1}</div>`;
   const cardId=`${owner==='player'?'pc':'cc'}-${idx}`;
 
   return `<div class="card ${selClass}" id="${cardId}" ${onclick?`onclick="${onclick}"`:''}>${inner}${badge}${scoreLbl}${numBadge}</div>`;
@@ -1182,7 +1371,7 @@ function deckCardEl(clickable) {
 
 function render() {
   const p=G.phase;
-  const canDraw=p==='player_draw';
+  const canDraw=p==='player_draw'&&!G.snapActive;
   const topDiscard=G.discard.length?G.discard[G.discard.length-1]:null;
 
   const ccHTML=G.cCards.map((s,i)=>cardEl(s,'computer',i)).join('');
@@ -1203,7 +1392,7 @@ function render() {
   </div>`;
 
   let btnsHTML='';
-  if (p==='player_draw') {
+  if (p==='player_draw'&&!G.snapActive) {
     btnsHTML=`
       <button class="btn-green" onclick="drawDeck()">Draw from Deck</button>
       <button class="btn-grey"  onclick="drawDiscard()" ${!G.discard.length?'disabled':''}>Take from Discard</button>
@@ -1243,7 +1432,7 @@ function render() {
 
   document.getElementById('ga').innerHTML=`
     <div class="section">
-      <div class="section-label">Computer's Cards</div>
+      <div class="section-label">Computer's Cards <span style="text-transform:capitalize;letter-spacing:1px;opacity:0.6;">(${G.difficulty})</span></div>
       <div class="cards-row">${ccHTML}</div>
     </div>
     <div class="section" style="background:transparent;padding:8px 0;">${middleHTML}</div>
@@ -1261,7 +1450,7 @@ function render() {
 }
 
 function toggleRules() {
-  document.getElementById('rulesBox').classList.toggle('open');
+  document.getElementById('rules-overlay').classList.toggle('open');
 }
 
 // Show splash on load
