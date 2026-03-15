@@ -1,0 +1,6 @@
+{
+  "html.validate.styles": false,
+  "css.lint.unknownProperties": "ignore",
+  "css.lint.duplicateProperties": "ignore",
+  "javascript.validate.enable": false
+}

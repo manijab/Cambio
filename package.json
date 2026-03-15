@@ -1,0 +1,16 @@
+{
+  "name": "cambio",
+  "version": "1.0.0",
+  "description": "Cambio card game with local network multiplayer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
+  }
+}

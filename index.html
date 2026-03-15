@@ -95,6 +95,38 @@ body {
   position: relative;
 }
 
+/* ---- Card themes ---- */
+:root {
+  --cf-bg: #fff;
+  --cf-border: #ccc;
+  --cf-shadow: 1px 2px 6px rgba(0,0,0,0.35);
+  --cc-red: #c62828;
+  --cc-black: #1a1a1a;
+  --cb-bg: repeating-linear-gradient(45deg,#1a237e,#1a237e 5px,#283593 5px,#283593 10px);
+  --cb-border: rgba(255,255,255,0.85);
+  --cb-shadow: 1px 2px 6px rgba(0,0,0,0.35);
+}
+body.theme-dark {
+  --cf-bg: #2d2d2d;
+  --cf-border: #555;
+  --cf-shadow: 1px 2px 8px rgba(0,0,0,0.6);
+  --cc-red: #ffd700;
+  --cc-black: #c0c0c0;
+  --cb-bg: repeating-linear-gradient(45deg,#0a0a0a,#0a0a0a 5px,#181818 5px,#181818 10px);
+  --cb-border: rgba(160,160,160,0.45);
+  --cb-shadow: 1px 2px 8px rgba(0,0,0,0.7);
+}
+body.theme-neon {
+  --cf-bg: #0d0d0d;
+  --cf-border: #2a2a2a;
+  --cf-shadow: 1px 2px 6px rgba(0,0,0,0.8);
+  --cc-red: #ff2d78;
+  --cc-black: #00f5ff;
+  --cb-bg: #0d0d0d;
+  --cb-border: #00f5ff;
+  --cb-shadow: 0 0 8px rgba(0,245,255,0.8), 0 0 18px rgba(0,245,255,0.3);
+}
+
 /* ---- Card ---- */
 .card {
   width: 78px;
@@ -108,17 +140,17 @@ body {
 .card-face {
   width: 100%;
   height: 100%;
-  background: #fff;
+  background: var(--cf-bg);
   border-radius: 9px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--cf-border);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 5px;
-  box-shadow: 1px 2px 6px rgba(0,0,0,0.35);
+  box-shadow: var(--cf-shadow);
 }
-.card-face.red  { color: #c62828; }
-.card-face.black { color: #1a1a1a; }
+.card-face.red   { color: var(--cc-red); }
+.card-face.black { color: var(--cc-black); }
 .card-corner { font-size: 0.82rem; font-weight: 700; line-height: 1.1; }
 .card-corner .s { font-size: 0.65rem; display: block; }
 .card-corner.bot { transform: rotate(180deg); align-self: flex-end; }
@@ -126,10 +158,10 @@ body {
 .card-back {
   width: 100%;
   height: 100%;
-  background: repeating-linear-gradient(45deg, #1a237e, #1a237e 5px, #283593 5px, #283593 10px);
+  background: var(--cb-bg);
   border-radius: 9px;
-  border: 3px solid rgba(255,255,255,0.85);
-  box-shadow: 1px 2px 6px rgba(0,0,0,0.35);
+  border: 3px solid var(--cb-border);
+  box-shadow: var(--cb-shadow);
 }
 .card.selectable { cursor: pointer; }
 .card.selectable:hover {
@@ -345,6 +377,120 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
 }
 .rules-close:hover { color: #fff; }
 
+/* ---- Settings modal ---- */
+.cog-btn {
+  font-size: 0.85rem;
+  line-height: 1;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.6);
+  border-radius: 6px;
+  padding: 5px 9px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.12s, border-color 0.12s, transform 0.3s;
+}
+.cog-btn:hover { color: #fff; border-color: rgba(255,255,255,0.6); transform: rotate(45deg); }
+#settings-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+#settings-overlay.open { display: flex; }
+#settings-modal {
+  background: #1b4d2e;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 28px 32px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 280px;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+#settings-modal h2 {
+  font-size: 1rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #fff;
+  text-align: center;
+}
+.settings-section { display: flex; flex-direction: column; gap: 10px; }
+.settings-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.45);
+}
+.settings-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.12s;
+}
+.settings-close:hover { color: #fff; }
+
+/* ---- Mode select modal ---- */
+#mode-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+#mode-modal-overlay.open { display: flex; }
+#mode-modal {
+  background: #1b4d2e;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 32px 36px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 260px;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+#mode-modal h2 {
+  font-size: 1rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 4px;
+}
+#mode-modal .btn-green, #mode-modal .btn-grey {
+  width: 210px;
+  font-size: 0.95rem;
+  padding: 13px 0;
+}
+#mode-modal-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.12s;
+}
+#mode-modal-close:hover { color: #fff; }
+
 /* ---- Splash screen ---- */
 .splash {
   display: flex;
@@ -369,6 +515,22 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
   font-size: 0.95rem;
   letter-spacing: 0.5px;
 }
+.theme-picker { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:4px; }
+.theme-btn {
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.65);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.theme-btn:hover { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.45); }
+.theme-btn.active { border-color: #fff; color: #fff; background: rgba(255,255,255,0.22); }
+.theme-label { font-size:0.7rem; color:rgba(255,255,255,0.4); letter-spacing:1.5px; text-transform:uppercase; }
 .btn-start {
   background: linear-gradient(135deg, #1565c0, #1976d2);
   color: #fff;
@@ -471,6 +633,55 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
   will-change: transform, top, left;
 }
 
+/* ---- Snap timer ---- */
+@keyframes snap-bar-drain {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+@keyframes snap-timer-in {
+  from { opacity: 0; transform: translateX(-50%) scaleX(0.6); }
+  to   { opacity: 1; transform: translateX(-50%) scaleX(1); }
+}
+#snap-timer {
+  position: fixed;
+  z-index: 920;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  animation: snap-timer-in 0.15s ease-out;
+}
+.snap-timer-track {
+  width: 80px;
+  height: 5px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.snap-timer-bar {
+  height: 100%;
+  border-radius: 3px;
+  animation: snap-bar-drain 2.5s linear forwards;
+  transition: background 0.2s;
+}
+.snap-timer-label {
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  margin-bottom: 1px;
+}
+.snap-timer-num {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #fff;
+  opacity: 0.85;
+  transition: color 0.2s;
+}
+
 /* ---- Snap ---- */
 @keyframes snap-pulse {
   0%,100% { box-shadow: 0 0 0 3px #ffd700, 0 4px 14px rgba(0,0,0,0.4); }
@@ -502,28 +713,182 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
   animation: snap-banner-in 0.2s ease-out;
   line-height: 1.5;
 }
+
+/* ── Cambio explosion ───────────────────────────────────── */
+@keyframes cambio-burst {
+  0%   { transform: scale(0.02); opacity: 0; }
+  6%   { opacity: 1; }
+  22%  { transform: scale(1.5);  }
+  34%  { transform: scale(0.85); }
+  44%  { transform: scale(1.18); }
+  54%  { transform: scale(0.95); }
+  62%  { transform: scale(1.06); }
+  72%  { transform: scale(1.0);  opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: scale(1.08); opacity: 0; }
+}
+@keyframes cambio-glow-pulse {
+  0%,100% { text-shadow: 0 0 40px #fff, 0 0 80px #ffa500, 0 0 160px #ff3300; }
+  50%     { text-shadow: 0 0 20px #fff700, 0 0 50px #ff6600, 0 0 100px #ff0000; }
+}
+@keyframes cambio-screen-flash {
+  0%   { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+#cambio-explosion {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 9999;
+}
+#cambio-explosion .ce-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,180,0,0.5) 0%, rgba(255,60,0,0.25) 40%, transparent 70%);
+  animation: cambio-screen-flash 0.6s ease-out forwards;
+}
+#cambio-explosion .ce-text {
+  position: relative;
+  font-size: 6.5rem;
+  font-weight: 900;
+  letter-spacing: 10px;
+  color: #fff;
+  text-shadow: 0 0 40px #fff, 0 0 80px #ffa500, 0 0 160px #ff3300;
+  animation: cambio-burst 2.4s cubic-bezier(0.22,0.61,0.36,1) forwards,
+             cambio-glow-pulse 0.25s ease-in-out infinite;
+}
+
+/* ── Multiplayer lobby ───────────────────────────────────── */
+.mp-lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 16px;
+  text-align: center;
+}
+.mp-lobby h2 {
+  font-size: 1.2rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.mp-lobby p {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  max-width: 300px;
+}
+.mp-address {
+  background: rgba(0,0,0,0.45);
+  border-radius: 10px;
+  padding: 14px 28px;
+  min-width: 260px;
+}
+.mp-address .lbl {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.mp-address .val {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  word-break: break-all;
+  color: #90caf9;
+}
+.mp-status {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.5);
+  min-height: 1.2em;
+}
+.mp-status.ok  { color: #a5d6a7; }
+.mp-status.err { color: #ef9a9a; }
+.mp-divider {
+  width: 100%;
+  max-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,0.2);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+}
+.mp-divider::before, .mp-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+}
+/* Badge fixed in corner showing HOST / GUEST */
+#mp-badge {
+  position: fixed;
+  top: 12px;
+  right: 14px;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  z-index: 600;
+  pointer-events: none;
+  display: none;
+}
+#mp-badge.host-badge  { background: rgba(21,101,192,0.85); color: #fff; }
+#mp-badge.guest-badge { background: rgba(46,125,50,0.85);  color: #fff; }
+/* Disconnect overlay */
+#disconnect-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
+#disconnect-overlay h2 {
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+}
+#disconnect-overlay p {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.88rem;
+  max-width: 280px;
+  line-height: 1.6;
+}
 </style>
 </head>
 <body>
 
+<div id="mp-badge"></div>
+
 <div id="topbar">
-  <button id="new-game-btn" onclick="startNewGame()">&#9654; New Game</button>
-  <h1>CAMBIO</h1>
+  <button id="new-game-btn" onclick="showModeModal()">&#9654; New Game</button>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;line-height:1;">
+    <h1 style="margin:0;">CAMBIO</h1>
+    <span style="font-size:0.55rem;letter-spacing:0.08em;opacity:0.55;color:#fff;font-weight:400;margin-top:2px;">by Manuel</span>
+  </div>
   <button class="rules-toggle" onclick="toggleRules()">Rules</button>
+  <button class="cog-btn" onclick="showSettingsModal()">&#9881;</button>
 </div>
 
-<div id="diff-row">
-  <span>Difficulty:</span>
-  <button class="diff-btn diff-active easy" id="diff-easy"   onclick="setDifficulty('easy')">Easy</button>
-  <button class="diff-btn medium"           id="diff-medium" onclick="setDifficulty('medium')">Medium</button>
-  <button class="diff-btn hard"             id="diff-hard"   onclick="setDifficulty('hard')">Hard</button>
-</div>
 
 <div class="game-area" id="ga"></div>
 
 <div id="rules-overlay" onclick="if(event.target===this)toggleRules()">
   <div class="rules-modal">
     <button class="rules-close" onclick="toggleRules()">&#x2715;</button>
+    <h2>Objective</h2>
+    Each player has 4 face-down cards. You cannot look at your cards unless a special card lets you. The goal is to have the lowest total point value in your hand. Call <strong>Cambio</strong> when you think you have the lowest score — but be careful, if you don't have the lowest score you lose.<br><br>
     <h2>How to Play</h2>
     Draw a card from the deck or discard pile each turn. Swap it with one of your face-down cards, or discard it.<br>
     Call <strong>Cambio</strong> instead of drawing — everyone else gets one final turn, then lowest score wins.<br><br>
@@ -531,930 +896,48 @@ button:disabled { opacity: 0.38; cursor: default; transform: none; }
     10 → Peek at one of your own cards<br>
     J → Blind swap one of your cards with opponent's<br>
     Q → Peek at one of the opponent's cards<br>
-    K → Peek opponent's card, optionally swap<br><br>
+    K → Peek one of your own cards and one opponent card, then optionally swap them<br><br>
     <strong>Snap:</strong> After any discard, click one of your own cards if it matches the discarded value — correct snap removes it from your hand. Wrong snap adds 2 penalty cards. You cannot snap the card you just put down.<br><br>
     <strong>Scoring:</strong> A=1 · 2–9=face value · 10/J/Q/K=10 · K♥=−1 · Joker=0. Lowest total wins.
   </div>
 </div>
 
-<script>
-// ── Card definitions ─────────────────────────────────────
-const SUITS = [
-  {sym:'♠',color:'black'},{sym:'♥',color:'red'},
-  {sym:'♦',color:'red'},{sym:'♣',color:'black'}
-];
-const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-
-function cardVal(rank, suit) {
-  if (rank==='Jo') return 0;
-  if (rank==='A')  return 1;
-  if (rank==='K')  return suit==='♥' ? -1 : 10;
-  if (rank==='J'||rank==='Q') return 10;
-  return parseInt(rank,10);
-}
-function ability(rank) {
-  if (rank==='10') return 'peek_own';
-  if (rank==='J') return 'blind_swap';
-  if (rank==='Q') return 'peek_opp';
-  if (rank==='K') return 'peek_swap';
-  return null;
-}
-function makeDeck() {
-  const d=[];let id=0;
-  for (const {sym,color} of SUITS)
-    for (const r of RANKS)
-      d.push({id:id++,rank:r,suit:sym,color,value:cardVal(r,sym)});
-  d.push({id:id++,rank:'Jo',suit:'★',color:'black',value:0});
-  d.push({id:id++,rank:'Jo',suit:'★',color:'red',value:0});
-  return d;
-}
-function shuffle(a) {
-  const b=[...a];
-  for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}
-  return b;
-}
-
-// ── Game state ───────────────────────────────────────────
-const G = {
-  deck:[],discard:[],
-  pCards:[],cCards:[],
-  drawn:null,
-  phase:'start',
-  cambioBy:null,
-  msg:'',
-  cKnown:{},cKnownP:{},pKnown:{},
-  bsOwnIdx:null,peekOppIdx:null,
-  peekingIdx:null,peekingOppIdx:null,
-  turns:0,pScore:0,cScore:0,
-  animating:false,
-  lastMove:'',
-  playerMove:'',
-  difficulty:'easy',
-  snapActive:false,
-  snapValue:null,
-  snapResolved:false,
-  snapResumeFn:null,
-  _snapCompTimer:null,
-  _snapWindowTimer:null
-};
-
-// ── Splash screen ────────────────────────────────────────
-function setDifficulty(d) {
-  if (G.phase !== 'start') return;
-  G.difficulty = d;
-  document.querySelectorAll('.diff-btn').forEach(b => {
-    b.classList.remove('diff-active');
-  });
-  const btn = document.getElementById('diff-'+d);
-  btn.classList.add('diff-active', d);
-}
-
-function lockDifficulty(locked) {
-  document.querySelectorAll('.diff-btn').forEach(b => { b.disabled = locked; });
-}
-
-function showSplash() {
-  G.phase='start';
-  lockDifficulty(false);
-  const deckCards = [
-    {rot:-8,tx:-8},{rot:-4,tx:-4},{rot:0,tx:0},{rot:4,tx:4},{rot:8,tx:8}
-  ];
-  const stackHTML = deckCards.map(({rot,tx})=>
-    `<div class="card" style="transform:rotate(${rot}deg) translateX(${tx}px)"><div class="card-back"></div></div>`
-  ).join('');
-  document.getElementById('ga').innerHTML = `
-    <div class="section">
-      <div class="section-label">Computer's Cards</div>
-      <div class="cards-row">${'<div class="card-empty"></div>'.repeat(4)}</div>
+<div id="settings-overlay" onclick="if(event.target===this)hideSettingsModal()">
+  <div id="settings-modal">
+    <button class="settings-close" onclick="hideSettingsModal()">&#x2715;</button>
+    <h2>Settings</h2>
+    <div class="settings-section">
+      <div class="settings-label">Difficulty</div>
+      <div style="display:flex;gap:8px;">
+        <button class="diff-btn easy"   id="sdiff-easy"   onclick="setDifficulty('easy')">Easy</button>
+        <button class="diff-btn medium" id="sdiff-medium" onclick="setDifficulty('medium')">Medium</button>
+        <button class="diff-btn hard"   id="sdiff-hard"   onclick="setDifficulty('hard')">Hard</button>
+      </div>
+      <div id="sdiff-note" style="font-size:0.7rem;color:rgba(255,255,255,0.35);display:none;">Start a new game to change difficulty.</div>
     </div>
-    <div class="section" style="background:transparent;padding:8px 0;">
-      <div class="middle">
-        <div class="pile-wrap"><div class="pile-label">Deck</div><div class="card-empty"></div></div>
-        <div class="pile-wrap"><div class="pile-label">Discard</div><div class="card-empty"></div></div>
+    <div class="settings-section">
+      <div class="settings-label">Card Theme</div>
+      <div class="theme-picker" style="justify-content:flex-start;">
+        <button class="theme-btn" id="stheme-classic" onclick="setTheme('classic')">Classic</button>
+        <button class="theme-btn" id="stheme-dark"    onclick="setTheme('dark')">Dark</button>
+        <button class="theme-btn" id="stheme-neon"    onclick="setTheme('neon')">Neon</button>
       </div>
     </div>
-    <div class="splash">
-      <div class="splash-deck">${stackHTML}</div>
-      <div class="splash-text">Press New Game to start</div>
-    </div>
-    <div class="section">
-      <div class="section-label">Your Cards</div>
-      <div class="cards-row">${'<div class="card-empty"></div>'.repeat(4)}</div>
-    </div>
-  `;
-}
+  </div>
+</div>
 
-// ── Start new game with animation ────────────────────────
-function startNewGame() {
-  if (G.animating) return;
-  G.animating = true;
-  document.getElementById('new-game-btn').disabled = true;
+<div id="mode-modal-overlay" onclick="if(event.target===this)hideModeModal()">
+  <div id="mode-modal">
+    <button id="mode-modal-close" onclick="hideModeModal()">&#x2715;</button>
+    <h2>New Game</h2>
+    <button class="btn-green" onclick="hideModeModal();startNewGame()">&#9654; Solo vs Computer</button>
+    <button class="btn-grey" onclick="hideModeModal();showMultiplayerMenu()">&#127760; Local Multiplayer</button>
+  </div>
+</div>
 
-  // Prepare card data
-  const deck = shuffle(makeDeck());
-  G.pCards = deck.slice(0,4).map(c=>({card:c,faceUp:false}));
-  G.cCards = deck.slice(4,8).map(c=>({card:c,faceUp:false}));
-  G.deck   = deck.slice(8);
-  G.discard= [G.deck.pop()];
-  G.drawn=null; G.phase='dealing'; G.cambioBy=null;
-  G.cKnown={}; G.cKnownP={}; G.pKnown={}; G.lastMove=''; G.playerMove='';
-  G.bsOwnIdx=null; G.peekOppIdx=null;
-  G.peekingIdx=null; G.peekingOppIdx=null; G.turns=0;
-  clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
-  G.snapActive=false; G.snapValue=null; G.snapResolved=false; G.snapResumeFn=null;
-  const snapBanner=document.getElementById('snap-banner'); if(snapBanner) snapBanner.remove();
-  G.msg='Dealing...';
-  lockDifficulty(true);
+<script src="game.js"></script>
+<script src="multiplayer.js"></script>
+<script src="ui.js"></script>
 
-  // Render the layout with hidden card slots
-  renderDealing();
-
-  // Short pause then show shuffle overlay
-  setTimeout(showShuffleOverlay, 80);
-}
-
-function renderDealing() {
-  // Render full layout — card slots are invisible (used as position anchors)
-  const compSlots = G.cCards.map((_,i)=>
-    `<div class="card" id="slot-c${i}" style="visibility:hidden"><div class="card-back"></div></div>`
-  ).join('');
-  const playerSlots = G.pCards.map((_,i)=>
-    `<div class="card" id="slot-p${i}" style="visibility:hidden"><div class="card-back"></div></div>`
-  ).join('');
-  document.getElementById('ga').innerHTML = `
-    <div class="section">
-      <div class="section-label">Computer's Cards</div>
-      <div class="cards-row">${compSlots}</div>
-    </div>
-    <div class="section" style="background:transparent;padding:8px 0;">
-      <div class="middle">
-        <div class="pile-wrap" id="deck-pile">
-          <div class="pile-label">Deck</div>
-          <div class="card"><div class="card-back"></div></div>
-        </div>
-        <div class="pile-wrap">
-          <div class="pile-label">Discard</div>
-          <div class="card-empty" id="discard-slot"></div>
-        </div>
-      </div>
-    </div>
-    <div class="message">Shuffling and dealing...</div>
-    <div class="btns"></div>
-    <div class="section">
-      <div class="section-label">Your Cards</div>
-      <div class="cards-row">${playerSlots}</div>
-    </div>
-  `;
-}
-
-function showShuffleOverlay() {
-  const overlay = document.createElement('div');
-  overlay.id = 'shuffle-overlay';
-  // Centered deck with shuffle animation
-  let cardsHTML = '';
-  for (let i=0; i<6; i++) {
-    const delay = (i * 0.06).toFixed(2);
-    const baseRot = (i-3)*3;
-    cardsHTML += `<div class="shuffle-card" style="animation-delay:${delay}s;transform:rotate(${baseRot}deg)"><div class="card-back"></div></div>`;
-  }
-  overlay.innerHTML = `
-    <div id="shuffle-deck">
-      ${cardsHTML}
-      <div id="shuffle-label">Shuffling…</div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  // After shuffle animation completes, start dealing
-  setTimeout(() => {
-    overlay.remove();
-    runDealAnimation();
-  }, 1400);
-}
-
-function runDealAnimation() {
-  // Deal order: c0,p0,c1,p1,c2,p2,c3,p3
-  const order = ['c0','p0','c1','p1','c2','p2','c3','p3'];
-  const deckEl = document.querySelector('#deck-pile .card');
-  const deckRect = deckEl.getBoundingClientRect();
-
-  let i = 0;
-  function dealNext() {
-    if (i >= order.length) {
-      // All cards dealt — animate discard card appearing
-      setTimeout(showDiscardCard, 250);
-      return;
-    }
-    const slotId = 'slot-' + order[i];
-    const slotEl = document.getElementById(slotId);
-    const slotRect = slotEl.getBoundingClientRect();
-    i++;
-
-    flyCard(deckRect, slotRect, () => {
-      // Reveal the slot card
-      slotEl.style.visibility = 'visible';
-      slotEl.style.animation = 'card-land 0.15s ease-out';
-      dealNext();
-    });
-
-    // Small stagger before firing next
-    // (handled via callback chain — each fires after previous lands)
-  }
-  dealNext();
-}
-
-function flyCard(fromRect, toRect, onDone, duration=0.22) {
-  const el = document.createElement('div');
-  el.className = 'flying-card';
-  el.innerHTML = '<div class="card-back" style="width:100%;height:100%;border-radius:9px;border:3px solid rgba(255,255,255,0.85);background:repeating-linear-gradient(45deg,#1a237e,#1a237e 5px,#283593 5px,#283593 10px);box-shadow:1px 2px 6px rgba(0,0,0,0.35);"></div>';
-
-  // Start at deck position
-  el.style.left   = fromRect.left + 'px';
-  el.style.top    = fromRect.top  + 'px';
-  el.style.width  = fromRect.width + 'px';
-  el.style.height = fromRect.height + 'px';
-  document.body.appendChild(el);
-
-  // Force layout then animate to target
-  el.getBoundingClientRect();
-  el.style.transition = `left ${duration}s cubic-bezier(0.4,0,0.2,1), top ${duration}s cubic-bezier(0.4,0,0.2,1)`;
-  el.style.left = toRect.left + 'px';
-  el.style.top  = toRect.top  + 'px';
-
-  el.addEventListener('transitionend', () => {
-    el.remove();
-    onDone();
-  }, {once:true});
-}
-
-function showDiscardCard() {
-  // Animate the discard card appearing
-  const discardSlot = document.getElementById('discard-slot');
-  if (!discardSlot) { finishDealing(); return; }
-
-  const deckEl = document.querySelector('#deck-pile .card');
-  const deckRect = deckEl.getBoundingClientRect();
-  const discardRect = discardSlot.getBoundingClientRect();
-
-  const discardCard = G.discard[0];
-
-  flyCard(deckRect, discardRect, () => {
-    // Replace empty slot with face-up card
-    const inner = `<div class="card-face ${discardCard.color}">
-      <div class="card-corner">${discardCard.rank}<span class="s">${discardCard.suit}</span></div>
-      <div class="card-mid">${discardCard.rank==='Jo'?'🃏':discardCard.suit}</div>
-      <div class="card-corner bot">${discardCard.rank}</div>
-    </div>`;
-    discardSlot.outerHTML = `<div class="card" id="discard-shown">${inner}</div>`;
-    setTimeout(finishDealing, 350);
-  });
-}
-
-// Get bounding rect of an element by ID (returns null if not found)
-function getRect(id) {
-  const el = document.getElementById(id);
-  return el ? el.getBoundingClientRect() : null;
-}
-
-// Animate a card flying from a pile rect to the drawn-card area
-function animatePileToDraw(srcRect) {
-  if (!srcRect) return;
-  const dstEl = document.getElementById('drawn-card');
-  if (!dstEl) return;
-  const dstRect = dstEl.getBoundingClientRect();
-  dstEl.style.visibility = 'hidden';
-  flyCard(srcRect, dstRect, () => { dstEl.style.visibility = ''; });
-}
-
-function animateSwap(id1, id2, callback) {
-  const el1=document.getElementById(id1);
-  const el2=document.getElementById(id2);
-  if (!el1||!el2) { callback(); return; }
-
-  const r1=el1.getBoundingClientRect();
-  const r2=el2.getBoundingClientRect();
-
-  function makeFly(rect) {
-    const f=document.createElement('div');
-    f.className='flying-card';
-    f.innerHTML='<div style="width:100%;height:100%;border-radius:9px;border:3px solid rgba(255,255,255,0.85);background:repeating-linear-gradient(45deg,#1a237e,#1a237e 5px,#283593 5px,#283593 10px);box-shadow:2px 4px 10px rgba(0,0,0,0.5);"></div>';
-    f.style.left=rect.left+'px'; f.style.top=rect.top+'px';
-    f.style.width=rect.width+'px'; f.style.height=rect.height+'px';
-    return f;
-  }
-
-  const fly1=makeFly(r1), fly2=makeFly(r2);
-  el1.style.visibility='hidden';
-  el2.style.visibility='hidden';
-  document.body.appendChild(fly1);
-  document.body.appendChild(fly2);
-
-  fly1.getBoundingClientRect(); // force reflow
-
-  const t='left 0.38s cubic-bezier(0.4,0,0.2,1), top 0.38s cubic-bezier(0.4,0,0.2,1)';
-  fly1.style.transition=t; fly2.style.transition=t;
-  fly1.style.left=r2.left+'px'; fly1.style.top=r2.top+'px';
-  fly2.style.left=r1.left+'px'; fly2.style.top=r1.top+'px';
-
-  setTimeout(()=>{
-    fly1.remove(); fly2.remove();
-    el1.style.visibility=''; el2.style.visibility='';
-    callback();
-  }, 420);
-}
-
-// ── Snap helpers ─────────────────────────────────────────
-function removePlayerCard(idx) {
-  G.pCards.splice(idx,1);
-  const kn={};
-  Object.entries(G.pKnown).forEach(([k,v])=>{const ki=+k;if(ki<idx)kn[ki]=v;else if(ki>idx)kn[ki-1]=v;});
-  G.pKnown=kn;
-}
-function removeComputerCard(idx) {
-  G.cCards.splice(idx,1);
-  const kn={},kp={};
-  Object.entries(G.cKnown).forEach(([k,v])=>{const ki=+k;if(ki<idx)kn[ki]=v;else if(ki>idx)kn[ki-1]=v;});
-  Object.entries(G.cKnownP).forEach(([k,v])=>{const ki=+k;if(ki<idx)kp[ki]=v;else if(ki>idx)kp[ki-1]=v;});
-  G.cKnown=kn; G.cKnownP=kp;
-}
-function showSnapBanner(text) {
-  let el=document.getElementById('snap-banner');
-  if(el) el.remove();
-  el=document.createElement('div'); el.id='snap-banner';
-  el.innerHTML=text;
-  document.body.appendChild(el);
-}
-function closeSnapWindow() {
-  if (!G.snapActive) return;
-  G.snapActive=false; G.snapValue=null;
-  clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
-  const el=document.getElementById('snap-banner'); if(el) el.remove();
-  const fn=G.snapResumeFn; G.snapResumeFn=null;
-  render();
-  if(fn) fn();
-}
-function triggerSnapWindow(card, resumeFn) {
-  if(['start','dealing','game_over','revealing'].includes(G.phase)){ resumeFn(); return; }
-  G.snapActive=true; G.snapValue=card.value; G.snapResolved=false; G.snapResumeFn=resumeFn;
-  render();
-  const delay=G.difficulty==='easy'?3000:G.difficulty==='hard'?500:2000;
-  G._snapCompTimer=setTimeout(()=>{ if(!G.snapResolved&&G.snapActive) computerTrySnap(); },delay);
-  G._snapWindowTimer=setTimeout(()=>{ closeSnapWindow(); },4000);
-}
-function playerTrySnap(idx) {
-  if(!G.snapActive||G.snapResolved) return;
-  const card=G.pCards[idx].card;
-  if(card.value===G.snapValue) {
-    G.snapResolved=true;
-    clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
-    showSnapBanner(`✓ SNAP! You removed card ${idx+1} (${fmt(card)})!`);
-    removePlayerCard(idx);
-    G.msg=`You snapped and removed card ${idx+1}!`;
-    render();
-    setTimeout(()=>{
-      const el=document.getElementById('snap-banner'); if(el) el.remove();
-      G.snapActive=false; G.snapValue=null;
-      const fn=G.snapResumeFn; G.snapResumeFn=null;
-      render(); if(fn) fn();
-    },1200);
-  } else {
-    // Wrong snap — 2 penalty cards
-    for(let i=0;i<2;i++){if(!G.deck.length)reshuffleDiscard();if(G.deck.length)G.pCards.push({card:G.deck.pop(),faceUp:false});}
-    showSnapBanner(`✗ Wrong snap! You got +2 penalty cards`);
-    G.msg=`Wrong snap! +2 penalty cards added to your hand.`;
-    render();
-  }
-}
-function computerTrySnap() {
-  if(!G.snapActive||G.snapResolved) return;
-  const match=Object.entries(G.cKnown).find(([,v])=>v===G.snapValue);
-  if(!match) return;
-  const idx=+match[0];
-  G.snapResolved=true;
-  clearTimeout(G._snapCompTimer); clearTimeout(G._snapWindowTimer);
-  showSnapBanner(`⚡ Computer SNAPPED! Removes its card ${idx+1}`);
-  removeComputerCard(idx);
-  G.msg=`Computer snapped and removed its card ${idx+1}!`;
-  render();
-  setTimeout(()=>{
-    const el=document.getElementById('snap-banner'); if(el) el.remove();
-    G.snapActive=false; G.snapValue=null;
-    const fn=G.snapResumeFn; G.snapResumeFn=null;
-    render(); if(fn) fn();
-  },1200);
-}
-
-function finishDealing() {
-  G.animating = false;
-  G.phase = 'player_draw';
-  G.msg = 'Your turn. Draw from the deck or discard pile, or call Cambio.';
-  document.getElementById('new-game-btn').disabled = false;
-  render();
-}
-
-// ── Player actions ───────────────────────────────────────
-function drawDeck() {
-  if (G.snapActive) return;
-  if (G.phase!=='player_draw') return;
-  if (!G.deck.length) reshuffleDiscard();
-  if (!G.deck.length) { endGame(); return; }
-  const srcRect = getRect('deck-card');
-  G.drawn = G.deck.pop();
-  G.drawnFrom = 'deck';
-  G.phase = 'player_action';
-  const ab = ability(G.drawn.rank);
-  let hint='';
-  if (ab==='peek_own')   hint=' [Special: peek own if discarded]';
-  if (ab==='blind_swap') hint=' [Special: blind swap if discarded]';
-  if (ab==='peek_opp')   hint=' [Special: peek opponent card if discarded]';
-  if (ab==='peek_swap')  hint=' [Special: peek & swap if discarded]';
-  G.msg=`You drew ${fmt(G.drawn)}. Click one of your cards to swap, or discard.${hint}`;
-  render();
-  animatePileToDraw(srcRect);
-}
-function drawDiscard() {
-  if (G.snapActive) return;
-  if (G.phase!=='player_draw'||!G.discard.length) return;
-  const srcRect = getRect('discard-card');
-  G.drawn = G.discard.pop();
-  G.drawnFrom = 'discard';
-  G.phase = 'player_action';
-  G.msg=`You took ${fmt(G.drawn)} from the discard pile. You must swap it with one of your cards.`;
-  render();
-  animatePileToDraw(srcRect);
-}
-function doDiscard() {
-  if (G.snapActive) return;
-  if (G.phase!=='player_action') return;
-  if (G.drawnFrom==='discard') return;
-  const c=G.drawn; G.drawn=null;
-  G.discard.push(c);
-  const ab = G.drawnFrom==='deck' ? ability(c.rank) : null;
-  if      (ab==='peek_own')   G.playerMove=`You discarded ${fmt(c)} — peeking your own card.`;
-  else if (ab==='blind_swap') G.playerMove=`You discarded ${fmt(c)} — blind swap activated.`;
-  else if (ab==='peek_opp')   G.playerMove=`You discarded ${fmt(c)} — peeking computer's card.`;
-  else if (ab==='peek_swap')  G.playerMove=`You discarded ${fmt(c)} — peek & swap activated.`;
-  else                        G.playerMove=`You discarded ${fmt(c)}.`;
-  render();
-  triggerSnapWindow(c, ()=>triggerAbility(ab));
-}
-function triggerAbility(ab) {
-  if (!ab) { endPlayerTurn(); return; }
-  if (ab==='peek_own')   { G.phase='player_peek_own'; G.msg='Select one of YOUR cards to peek at.'; }
-  if (ab==='blind_swap') { G.phase='player_bs_own';   G.msg='Blind swap! Select one of YOUR cards first.'; }
-  if (ab==='peek_opp')   { G.phase='player_q_peek';   G.msg="Queen! Select one of the COMPUTER's cards to peek at."; }
-  if (ab==='peek_swap')  { G.phase='player_pk_opp';   G.msg="King! Select one of the COMPUTER's cards to peek at (and optionally swap)."; }
-  render();
-}
-
-function clickPC(idx) {
-  if (G.snapActive) { playerTrySnap(idx); return; }
-  if (G.phase==='player_action') {
-    const drawnRect = getRect('drawn-card');
-    const slotRect  = getRect('pc-'+idx);
-    const doSwap = () => {
-      const old=G.pCards[idx].card;
-      G.playerMove=`You swapped your card ${idx+1} with the drawn ${fmt(G.drawn)}.`;
-      G.pCards[idx]={card:G.drawn,faceUp:false};
-      delete G.pKnown[idx];
-      G.drawn=null;
-      G.discard.push(old);
-      triggerSnapWindow(old, ()=>endPlayerTurn());
-    };
-    if (drawnRect && slotRect) {
-      const slotEl = document.getElementById('pc-'+idx);
-      slotEl.style.visibility='hidden';
-      flyCard(drawnRect, slotRect, ()=>{ slotEl.style.visibility=''; doSwap(); }, 0.55);
-    } else { doSwap(); }
-    return;
-  }
-  if (G.phase==='player_peek_own') {
-    G.peekingIdx=idx;
-    G.pKnown[idx]=G.pCards[idx].card.value;
-    G.phase='peeking_own';
-    G.msg=`Your card ${idx+1}: ${fmt(G.pCards[idx].card)} — memorize it!`;
-    render();
-    setTimeout(()=>{G.peekingIdx=null; G.playerMove=`You peeked at your card ${idx+1}.`; endPlayerTurn();},2000);
-    return;
-  }
-  if (G.phase==='player_bs_own') {
-    G.bsOwnIdx=idx;
-    delete G.pKnown[idx];
-    G.phase='player_bs_opp';
-    G.msg=`Card ${idx+1} selected. Now pick one of the COMPUTER's cards.`;
-    render(); return;
-  }
-  if (G.phase==='player_peeking_opp') {
-    const myOld=G.pCards[idx].card;
-    G.playerMove=`You swapped your card ${idx+1} with computer's card ${G.peekOppIdx+1}.`;
-    G.pCards[idx]={card:G.cCards[G.peekOppIdx].card,faceUp:false};
-    G.cCards[G.peekOppIdx]={card:myOld,faceUp:false};
-    delete G.pKnown[idx];
-    delete G.cKnown[G.peekOppIdx];
-    G.peekOppIdx=null; G.peekingOppIdx=null;
-    endPlayerTurn(); return;
-  }
-}
-
-function clickCC(idx) {
-  if (G.snapActive) return;
-  if (G.phase==='player_bs_opp') {
-    const oi=G.bsOwnIdx;
-    G.bsOwnIdx=null;
-    G.msg=`Swapping your card ${oi+1} with computer's card ${idx+1}…`;
-    G.phase='animating';
-    render();
-    animateSwap('pc-'+oi, 'cc-'+idx, ()=>{
-      const tmp=G.pCards[oi].card;
-      G.pCards[oi]={card:G.cCards[idx].card,faceUp:false};
-      G.cCards[idx]={card:tmp,faceUp:false};
-      delete G.cKnown[idx];
-      G.playerMove=`You blind swapped your card ${oi+1} with computer's card ${idx+1}.`;
-      G.lastMove=G.playerMove;
-      endPlayerTurn();
-    });
-    return;
-  }
-  if (G.phase==='player_q_peek') {
-    // Queen: just peek, no swap
-    G.peekingOppIdx=idx;
-    const c=G.cCards[idx].card;
-    G.msg=`Computer's card ${idx+1}: ${fmt(c)} (${c.value} pts) — memorize it!`;
-    render();
-    setTimeout(()=>{
-      G.peekingOppIdx=null;
-      G.playerMove=`You peeked at computer's card ${idx+1}.`;
-      G.lastMove=G.playerMove;
-      endPlayerTurn();
-    }, 2000);
-    return;
-  }
-  if (G.phase==='player_pk_opp') {
-    G.peekOppIdx=idx; G.peekingOppIdx=idx;
-    G.phase='player_peeking_opp';
-    const c=G.cCards[idx].card;
-    G.msg=`Computer's card ${idx+1}: ${fmt(c)} (${c.value} pts). Click YOUR card to swap it in, or skip.`;
-    render(); return;
-  }
-}
-
-function skipKingSwap() {
-  G.playerMove=`You peeked at computer's card ${G.peekOppIdx+1} and didn't swap.`;
-  G.peekOppIdx=null; G.peekingOppIdx=null;
-  endPlayerTurn();
-}
-function callCambio() {
-  if (G.snapActive) return;
-  if (G.phase!=='player_draw'||G.cambioBy) return;
-  G.cambioBy='player';
-  G.msg='You called CAMBIO! Computer gets one final turn...';
-  G.phase='computer_turn';
-  render();
-  setTimeout(compTurn,1300);
-}
-function endPlayerTurn() {
-  G.turns++;
-  G.peekingIdx=null; G.peekingOppIdx=null;
-  G.phase='computer_turn';
-  G.msg='Computer is thinking...';
-  render();
-  setTimeout(compTurn,2400);
-}
-
-// ── Helpers ──────────────────────────────────────────────
-function reshuffleDiscard() {
-  if (G.discard.length<=1) return;
-  const top=G.discard.pop();
-  G.deck=shuffle(G.discard);
-  G.discard=[top];
-}
-function fmt(c) { return c.rank+c.suit; }
-
-// ── Computer AI ──────────────────────────────────────────
-function compTurn() {
-  if (G.cambioBy==='computer') {
-    G.msg='Revealing cards...';
-    revealAll(); setTimeout(endGame,1400); return;
-  }
-  const afterPlayerCambio = G.cambioBy==='player';
-
-  if (!G.cambioBy) {
-    const kn=Object.values(G.cKnown);
-    const d=G.difficulty;
-    // Unknown card estimate: easy=6 (optimistic for player), medium=4.5, hard=3.5
-    const unkEst = d==='easy' ? 6 : d==='hard' ? 3.5 : 4.5;
-    const estScore=kn.reduce((a,b)=>a+b,0)+(G.cCards.length-kn.length)*unkEst;
-    const threshold = d==='easy' ? 15 : d==='medium' ? 6 : 2;
-    const shouldCall = estScore < threshold;
-    if (shouldCall) {
-      G.cambioBy='computer';
-      G.msg='Computer calls CAMBIO! You get one final turn.';
-      G.phase='player_draw'; render(); return;
-    }
-  }
-
-  const topDiscard=G.discard.length?G.discard[G.discard.length-1]:null;
-  let drawn, compDrewFromDeck=false;
-  // Discard-take threshold: easy=1, medium=2, hard=4
-  const discThresh = G.difficulty==='easy' ? 1 : G.difficulty==='hard' ? 4 : 2;
-  let srcRect=null;
-  if (topDiscard&&topDiscard.value<=discThresh) {
-    srcRect = getRect('discard-card');
-    drawn=G.discard.pop();
-    G.msg=`Computer takes ${fmt(drawn)} from the discard pile.`;
-  } else {
-    if (!G.deck.length) reshuffleDiscard();
-    if (!G.deck.length) { endGame(); return; }
-    srcRect = getRect('deck-card');
-    drawn=G.deck.pop();
-    compDrewFromDeck=true;
-    G.msg='Computer draws from the deck.';
-  }
-  render();
-
-  setTimeout(()=>{
-    // Special ability only available when drew from deck and intentionally discarding
-    // Easy: 55% chance to ignore special ability
-    const skipAbility = G.difficulty==='easy' && Math.random()<0.55;
-    const ab = (compDrewFromDeck && !skipAbility) ? ability(drawn.rank) : null;
-    let worstIdx=-1,worstVal=drawn.value;
-    for(let i=0;i<G.cCards.length;i++) {
-      if(G.cKnown[i]!==undefined&&G.cKnown[i]>worstVal){worstVal=G.cKnown[i];worstIdx=i;}
-    }
-    // Easy: 40% chance to ignore the optimal swap and just discard (only if drew from deck)
-    if (worstIdx!==-1 && compDrewFromDeck && G.difficulty==='easy' && Math.random()<0.4) worstIdx=-1;
-    // If drew from discard pile, must swap — force a random slot if no known worst card
-    if (!compDrewFromDeck && worstIdx===-1) worstIdx=0|Math.random()*G.cCards.length;
-
-    // Human-like randomness: occasionally make a completely random move
-    const randomThresh = G.difficulty==='hard' ? 0.05 : G.difficulty==='medium' ? 0.10 : 0.20;
-    if (Math.random() < randomThresh) {
-      if (Math.random() < 0.5) {
-        // Random swap with any card
-        const randIdx = 0|Math.random()*G.cCards.length;
-        const slotEl = document.getElementById('cc-'+randIdx);
-        const slotRect = slotEl ? slotEl.getBoundingClientRect() : null;
-        const doRandSwap = () => {
-          const old=G.cCards[randIdx].card;
-          G.cCards[randIdx]={card:drawn,faceUp:false};
-          G.cKnown[randIdx]=drawn.value;
-          G.discard.push(old);
-          G.msg=`Computer swaps card ${randIdx+1} (discards ${fmt(old)}).`;
-          render();
-          triggerSnapWindow(old, ()=>compEndTurn(afterPlayerCambio));
-        };
-        if (srcRect && slotRect && slotEl) {
-          slotEl.style.visibility='hidden';
-          flyCard(srcRect, slotRect, ()=>{ slotEl.style.visibility=''; doRandSwap(); }, 0.55);
-        } else { doRandSwap(); }
-      } else if (compDrewFromDeck) {
-        // Random discard, no ability (only allowed when drew from deck)
-        G.discard.push(drawn);
-        G.msg=`Computer discards ${fmt(drawn)}.`;
-        render();
-        triggerSnapWindow(drawn, ()=>compEndTurn(afterPlayerCambio));
-        return;
-      }
-      return;
-    }
-
-    if (worstIdx!==-1) {
-      const slotEl = document.getElementById('cc-'+worstIdx);
-      const slotRect = slotEl ? slotEl.getBoundingClientRect() : null;
-      const doCompSwap = () => {
-        const old=G.cCards[worstIdx].card;
-        G.cCards[worstIdx]={card:drawn,faceUp:false};
-        G.cKnown[worstIdx]=drawn.value;
-        G.discard.push(old);
-        G.msg=`Computer swaps card ${worstIdx+1} (discards ${fmt(old)}).`;
-        render();
-        triggerSnapWindow(old, ()=>compEndTurn(afterPlayerCambio));
-      };
-      if (srcRect && slotRect && slotEl) {
-        slotEl.style.visibility='hidden';
-        flyCard(srcRect, slotRect, ()=>{ slotEl.style.visibility=''; doCompSwap(); }, 0.55);
-      } else { doCompSwap(); }
-    } else {
-      G.discard.push(drawn);
-      render();
-      triggerSnapWindow(drawn, ()=>{
-        if (ab==='peek_own') {
-          const unk=Array.from({length:G.cCards.length},(_,i)=>i).filter(i=>G.cKnown[i]===undefined);
-          if (unk.length){const pi=unk[0|Math.random()*unk.length];G.cKnown[pi]=G.cCards[pi].card.value;}
-          G.msg=`Computer discards ${fmt(drawn)} and peeks at one of its own cards.`;
-          compEndTurn(afterPlayerCambio);
-        } else if (ab==='blind_swap') {
-          let swapOwn=0|Math.random()*G.cCards.length,bestBad=-Infinity;
-          for(let i=0;i<G.cCards.length;i++){if(G.cKnown[i]!==undefined&&G.cKnown[i]>bestBad){bestBad=G.cKnown[i];swapOwn=i;}}
-          const swapOpp=0|Math.random()*G.pCards.length;
-          G.msg=`Computer discards ${fmt(drawn)} — swapping its card ${swapOwn+1} with your card ${swapOpp+1}!`;
-          render();
-          animateSwap('cc-'+swapOwn, 'pc-'+swapOpp, ()=>{
-            const tmp=G.cCards[swapOwn].card;
-            G.cCards[swapOwn]={card:G.pCards[swapOpp].card,faceUp:false};
-            G.pCards[swapOpp]={card:tmp,faceUp:false};
-            delete G.cKnown[swapOwn]; delete G.pKnown[swapOpp];
-            compEndTurn(afterPlayerCambio);
-          });
-        } else if (ab==='peek_opp') {
-          // Queen: just peek a player card, no swap
-          const pi=0|Math.random()*G.pCards.length;
-          G.cKnownP[pi]=G.pCards[pi].card.value;
-          G.msg=`Computer discards ${fmt(drawn)} and peeks at your card ${pi+1}.`;
-          compEndTurn(afterPlayerCambio);
-        } else if (ab==='peek_swap') {
-          const pi=0|Math.random()*G.pCards.length, pv=G.pCards[pi].card.value;
-          G.cKnownP[pi]=pv;
-          let si=-1,sw=pv;
-          for(let i=0;i<G.cCards.length;i++){if(G.cKnown[i]!==undefined&&G.cKnown[i]>sw){sw=G.cKnown[i];si=i;}}
-          if (si!==-1) {
-            const tmp2=G.cCards[si].card;
-            G.cCards[si]={card:G.pCards[pi].card,faceUp:false};
-            G.pCards[pi]={card:tmp2,faceUp:false};
-            G.cKnown[si]=pv; delete G.pKnown[pi];
-            G.msg=`Computer discards ${fmt(drawn)}, peeks at your card, and swaps!`;
-          } else {
-            G.msg=`Computer discards ${fmt(drawn)} and peeks at one of your cards.`;
-          }
-          compEndTurn(afterPlayerCambio);
-        } else {
-          G.msg=`Computer discards ${fmt(drawn)}.`;
-          compEndTurn(afterPlayerCambio);
-        }
-      });
-    }
-  },700);
-}
-
-function compEndTurn(afterPlayerCambio) {
-  G.turns++;
-  if (afterPlayerCambio) {
-    G.msg='Revealing cards...';
-    revealAll(); setTimeout(endGame,1400);
-  } else {
-    G.lastMove = G.msg;
-    G.phase='player_draw';
-    G.msg='Your turn. Draw from the deck or discard pile, or call Cambio.';
-    render();
-  }
-}
-function revealAll() {
-  G.pCards.forEach(s=>s.faceUp=true);
-  G.cCards.forEach(s=>s.faceUp=true);
-  G.phase='revealing'; render();
-}
-function endGame() {
-  G.pScore=G.pCards.reduce((s,c)=>s+c.card.value,0);
-  G.cScore=G.cCards.reduce((s,c)=>s+c.card.value,0);
-  G.phase='game_over';
-  if (G.pScore<G.cScore)      G.msg=`You win! Your score: ${G.pScore} vs Computer: ${G.cScore}`;
-  else if (G.cScore<G.pScore) G.msg=`Computer wins! Computer: ${G.cScore} vs You: ${G.pScore}`;
-  else                         G.msg=`Tie game! Both scored ${G.pScore} points.`;
-  render();
-}
-
-// ── Render ───────────────────────────────────────────────
-function cardEl(slot, owner, idx) {
-  const {card,faceUp}=slot;
-  const isPeek=(owner==='player'&&G.peekingIdx===idx)||(owner==='computer'&&G.peekingOppIdx===idx);
-  const show=faceUp||isPeek;
-
-  let sel=false,onclick='';
-  if (G.snapActive && owner==='player') {
-    sel=true; onclick=`playerTrySnap(${idx})`;
-  } else {
-    if (owner==='player') {
-      if (['player_action','player_peek_own','player_bs_own','player_peeking_opp'].includes(G.phase))
-        {sel=true; onclick=`clickPC(${idx})`;}
-    }
-    if (owner==='computer') {
-      if (['player_bs_opp','player_pk_opp','player_q_peek'].includes(G.phase))
-        {sel=true; onclick=`clickCC(${idx})`;}
-    }
-  }
-  const selClass=(sel?'selectable ':'')+
-    (G.phase==='player_bs_opp'&&owner==='player'&&G.bsOwnIdx===idx?'selected-own':'');
-
-  const inner=show
-    ?`<div class="card-face ${card.color}">
-        <div class="card-corner">${card.rank}<span class="s">${card.suit}</span></div>
-        <div class="card-mid">${card.rank==='Jo'?'🃏':card.suit}</div>
-        <div class="card-corner bot">${card.rank}</div>
-      </div>`
-    :`<div class="card-back"></div>`;
-
-  const scoreLbl=(G.phase==='game_over'||G.phase==='revealing')
-    ?`<div class="card-score">${card.value}pts</div>`:'';
-
-  const badge=(owner==='player'&&!faceUp&&!isPeek&&G.pKnown[idx]!==undefined)
-    ?`<div class="peek-badge">${G.pKnown[idx]}</div>`:'';
-
-  const showScore=G.phase==='game_over'||G.phase==='revealing';
-  const numBadge=showScore?'':`<div class="card-num">${idx+1}</div>`;
-  const cardId=`${owner==='player'?'pc':'cc'}-${idx}`;
-
-  return `<div class="card ${selClass}" id="${cardId}" ${onclick?`onclick="${onclick}"`:''}>${inner}${badge}${scoreLbl}${numBadge}</div>`;
-}
-
-function pileCardEl(card,clickable,fn,id='') {
-  if (!card) return `<div class="card-empty"></div>`;
-  return `<div class="card${clickable?' pile-click':''}" ${id?`id="${id}"`:''}${fn?` onclick="${fn}"`:''}><div class="card-face ${card.color}">
-    <div class="card-corner">${card.rank}<span class="s">${card.suit}</span></div>
-    <div class="card-mid">${card.rank==='Jo'?'🃏':card.suit}</div>
-    <div class="card-corner bot">${card.rank}</div>
-  </div></div>`;
-}
-function deckCardEl(clickable) {
-  if (!G.deck.length) return `<div class="card-empty"></div>`;
-  return `<div class="card${clickable?' pile-click':''}" id="deck-card" ${clickable?'onclick="drawDeck()"':''}><div class="card-back"></div></div>`;
-}
-
-function render() {
-  const p=G.phase;
-  const canDraw=p==='player_draw'&&!G.snapActive;
-  const topDiscard=G.discard.length?G.discard[G.discard.length-1]:null;
-
-  const ccHTML=G.cCards.map((s,i)=>cardEl(s,'computer',i)).join('');
-  const drawnHTML=G.drawn?`<div class="drawn-wrap">
-    <div class="pile-label" style="color:rgba(255,255,255,0.8)">Drawn</div>
-    ${pileCardEl(G.drawn,false,null,'drawn-card')}</div>`:'';
-
-  const middleHTML=`<div class="middle">
-    <div class="pile-wrap" id="deck-pile">
-      <div class="pile-label">Deck (${G.deck.length})</div>
-      ${deckCardEl(canDraw)}
-    </div>
-    ${drawnHTML}
-    <div class="pile-wrap">
-      <div class="pile-label">Discard</div>
-      ${topDiscard?pileCardEl(topDiscard,canDraw,canDraw?'drawDiscard()':null,'discard-card'):'<div class="card-empty"></div>'}
-    </div>
-  </div>`;
-
-  let btnsHTML='';
-  if (p==='player_draw'&&!G.snapActive) {
-    btnsHTML=`
-      <button class="btn-green" onclick="drawDeck()">Draw from Deck</button>
-      <button class="btn-grey"  onclick="drawDiscard()" ${!G.discard.length?'disabled':''}>Take from Discard</button>
-      <button class="btn-orange" onclick="callCambio()" ${G.cambioBy?'disabled':''}>Call Cambio!</button>`;
-  } else if (p==='player_action') {
-    const ab=G.drawn?ability(G.drawn.rank):null;
-    let hint='';
-    if(ab==='peek_own')   hint=' + peek own';
-    if(ab==='blind_swap') hint=' + blind swap';
-    if(ab==='peek_opp')   hint=' + peek opponent card';
-    if(ab==='peek_swap')  hint=' + peek & swap';
-    const canDiscard = G.drawnFrom==='deck';
-    btnsHTML=canDiscard
-      ? `<button class="btn-grey" onclick="doDiscard()">Discard${hint}</button>`
-      : `<span style="font-size:0.8rem;color:rgba(255,255,255,0.45);font-style:italic;">Must swap — card taken from discard pile</span>`;
-  } else if (p==='player_peeking_opp') {
-    btnsHTML=`<button class="btn-grey" onclick="skipKingSwap()">Skip Swap</button>`;
-  } else if (p==='game_over') {
-    const ps=G.pScore,cs=G.cScore;
-    btnsHTML=`
-      <div class="scores" style="width:100%">
-        <div class="score-block"><div class="score-lbl">Your Score</div>
-          <div class="score-num ${ps<cs?'win':ps>cs?'lose':'tie'}">${ps}</div></div>
-        <div class="score-block"><div class="score-lbl">Computer</div>
-          <div class="score-num ${cs<ps?'win':cs>ps?'lose':'tie'}">${cs}</div></div>
-      </div>
-      <button class="btn-green" onclick="startNewGame()">Play Again</button>`;
-  }
-
-  const playerPhases=['player_draw','player_action','player_peek_own','player_bs_own',
-    'player_bs_opp','player_pk_opp','player_q_peek','player_peeking_opp','peeking_own','animating'];
-  const chipHTML=p==='computer_turn'
-    ?`<div class="turn-chip">Computer's Turn</div>`
-    :playerPhases.includes(p)?`<div class="turn-chip">Your Turn</div>`:'';
-
-  const pcHTML=G.pCards.map((s,i)=>cardEl(s,'player',i)).join('');
-
-  document.getElementById('ga').innerHTML=`
-    <div class="section">
-      <div class="section-label">Computer's Cards <span style="text-transform:capitalize;letter-spacing:1px;opacity:0.6;">(${G.difficulty})</span></div>
-      <div class="cards-row">${ccHTML}</div>
-    </div>
-    <div class="section" style="background:transparent;padding:8px 0;">${middleHTML}</div>
-    ${chipHTML}
-    <div class="message">
-      <div class="message-main">${G.msg}</div>
-      ${G.playerMove && p==='computer_turn' ? `<div class="message-last">${G.playerMove}</div>` : ''}
-      ${G.lastMove   && p==='player_draw'   ? `<div class="message-last">${G.lastMove}</div>`   : ''}
-    </div>
-    <div class="btns">${btnsHTML}</div>
-    <div class="section">
-      <div class="section-label">Your Cards</div>
-      <div class="cards-row">${pcHTML}</div>
-    </div>`;
-}
-
-function toggleRules() {
-  document.getElementById('rules-overlay').classList.toggle('open');
-}
-
-// Show splash on load
-showSplash();
-</script>
 </body>
 </html>
