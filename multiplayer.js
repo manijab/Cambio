@@ -19,7 +19,7 @@ function mpSend(msg) {
 
 function mpOpenWS(onOpen) {
   if (MP.ws) { try { MP.ws.close(); } catch {} }
-  const url = `ws://${location.host}`;
+  const url = `wss://${location.host}`;
   const ws  = new WebSocket(url);
   MP.ws     = ws;
   ws.onopen    = onOpen;
