@@ -37,22 +37,35 @@ function mpSetStatus(text, cls) {
 
 // ── Lobby actions ─────────────────────────────────────────
 function mpHost() {
+  if (!mpValidateName()) return;
   MP.role = 'host';
   document.getElementById('ga').innerHTML = `
-    <div class="mp-lobby"><h2>Connecting&#8230;</h2>
-      <div class="mp-status" id="mp-status">Connecting to server&#8230;</div>
+    <div class="mp-lobby">
+      <h2>Game Listed!</h2>
+      <p>Your game is visible in the lobby.<br>Waiting for an opponent to join&#8230;</p>
+      <div class="mp-status" id="mp-status">Waiting for a player&#8230;</div>
+      <button class="btn-grey" style="font-size:0.75rem;opacity:0.6;margin-top:8px;" onclick="mpCancel()">&#8592; Cancel</button>
     </div>`;
-  mpOpenWS(() => mpSend({ type: 'host', name: MP.name || '' }));
+  if (MP.ws && MP.ws.readyState === WebSocket.OPEN) {
+    mpSend({ type: 'host', name: MP.name || '' });
+  } else {
+    mpOpenWS(() => mpSend({ type: 'host', name: MP.name || '' }));
+  }
 }
 
-function mpJoin() {
+function mpJoin(roomId) {
+  if (!mpValidateName()) return;
   MP.role = 'joiner';
-  mpSetStatus('Connecting&#8230;');
-  mpOpenWS(() => mpSend({ type: 'join', name: MP.name || '' }));
-}
-
-function mpStartGame() {
-  mpSend({ type: 'start' });
+  document.getElementById('ga').innerHTML = `
+    <div class="mp-lobby">
+      <h2>Joining&#8230;</h2>
+      <div class="mp-status" id="mp-status">Connecting&#8230;</div>
+    </div>`;
+  if (MP.ws && MP.ws.readyState === WebSocket.OPEN) {
+    mpSend({ type: 'join', name: MP.name || '', roomId });
+  } else {
+    mpOpenWS(() => mpSend({ type: 'join', name: MP.name || '', roomId }));
+  }
 }
 
 function mpCancel() {
@@ -67,26 +80,27 @@ function handleMPMessage(msg) {
   switch (msg.type) {
 
     case 'hosting':
-      showHostLobby(msg.ip, msg.port);
+      mpSetStatus('Your game is listed. Waiting for a player to join&#8230;');
+      break;
+
+    case 'lobby_state':
+      renderLobbyGames(msg.games);
       break;
 
     case 'player_joined':
       MP.connected = true;
       MP.opponentName = msg.joinerName || null;
-      mpSetStatus(`${MP.opponentName || 'Opponent'} connected! Start when ready.`, 'ok');
-      const sb = document.getElementById('mp-start-btn');
-      if (sb) sb.disabled = false;
+      mpSetStatus(`${MP.opponentName || 'Opponent'} joined! Starting&#8230;`, 'ok');
       break;
 
     case 'join_ok':
       MP.connected = true;
       MP.opponentName = msg.hostName || null;
-      // Send our name to the host via the server relay
       mpSend({ type: 'player_name', name: MP.name || '' });
       document.getElementById('ga').innerHTML = `
         <div class="mp-lobby">
           <h2>Connected!</h2>
-          <div class="mp-status ok">Waiting for ${MP.opponentName || 'host'} to start the game&#8230;</div>
+          <div class="mp-status ok">Game starting&#8230;</div>
         </div>`;
       break;
 
@@ -502,6 +516,10 @@ function mpValidateName() {
   return true;
 }
 
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function showMultiplayerMenu() {
   if (window.location.protocol === 'file:') {
     document.getElementById('ga').innerHTML = `
@@ -517,45 +535,40 @@ function showMultiplayerMenu() {
   document.getElementById('ga').innerHTML = `
     <div class="mp-lobby">
       <h2>Multiplayer</h2>
-      <p>Both players must be on the same Wi-Fi network.<br>One player hosts, the other joins.</p>
-      <div style="margin:4px 0 16px;width:100%;max-width:260px;">
+      <div style="margin:4px 0 8px;width:100%;max-width:260px;">
         <input type="text" id="mp-name-input" maxlength="20" placeholder="Your name"
           style="width:100%;padding:10px 12px;font-size:1rem;border-radius:8px;border:2px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.12);color:#fff;outline:none;box-sizing:border-box;"
-          onkeydown="if(event.key==='Enter'&&mpValidateName())mpHost()" />
+          onkeydown="if(event.key==='Enter')mpHost()" />
         <div id="mp-name-error" style="color:#ff7070;font-size:0.8rem;min-height:1.2em;margin-top:4px;text-align:center;"></div>
       </div>
-      <button class="btn-green" style="min-width:200px;" onclick="if(mpValidateName())mpHost()">&#127968; Host Game</button>
-      <button class="btn-grey"  style="min-width:200px;" onclick="if(mpValidateName())mpShowJoinScreen()">&#128279; Join Game</button>
-      <button class="btn-grey"  style="font-size:0.75rem;opacity:0.6;" onclick="showSplash()">&#8592; Back</button>
-    </div>`;
-  // Restore previously entered name if any
-  if (MP.name) document.getElementById('mp-name-input').value = MP.name;
-}
-
-function showHostLobby(ip, port) {
-  document.getElementById('ga').innerHTML = `
-    <div class="mp-lobby">
-      <h2>Hosting</h2>
-      <p>Share this address with your opponent.<br>They must open it in their browser.</p>
-      <div class="mp-address">
-        <div class="lbl">Network address</div>
-        <div class="val">http://${ip}:${port}</div>
+      <div style="font-size:0.68rem;letter-spacing:1.5px;text-transform:uppercase;opacity:0.4;margin-bottom:6px;align-self:flex-start;">Available Games</div>
+      <div class="lobby-games" id="lobby-games">
+        <div class="lobby-empty">Connecting&#8230;</div>
       </div>
-      <div class="mp-status" id="mp-status">Waiting for opponent to connect&#8230;</div>
-      <button class="btn-green" id="mp-start-btn" onclick="mpStartGame()" disabled style="min-width:160px;">Start Game</button>
-      <button class="btn-grey" style="font-size:0.75rem;opacity:0.6;" onclick="mpCancel()">&#8592; Cancel</button>
+      <div class="mp-status" id="mp-status"></div>
+      <button class="btn-green" style="min-width:200px;margin-top:4px;" onclick="mpHost()">&#127968; Host New Game</button>
+      <button class="btn-grey"  style="font-size:0.75rem;opacity:0.6;" onclick="mpCancel()">&#8592; Back</button>
     </div>`;
+  if (MP.name) document.getElementById('mp-name-input').value = MP.name;
+  // Open WS and subscribe to lobby updates
+  mpOpenWS(() => mpSend({ type: 'lobby' }));
 }
 
-function mpShowJoinScreen() {
-  document.getElementById('ga').innerHTML = `
-    <div class="mp-lobby">
-      <h2>Join Game</h2>
-      <p>Open your browser at the host&rsquo;s address,<br>then click Connect below.</p>
-      <button class="btn-green" style="min-width:160px;" onclick="mpJoin()">Connect</button>
-      <div class="mp-status" id="mp-status"></div>
-      <button class="btn-grey" style="font-size:0.75rem;opacity:0.6;" onclick="showSplash()">&#8592; Back</button>
-    </div>`;
+function renderLobbyGames(games) {
+  const el = document.getElementById('lobby-games');
+  if (!el) return;
+  if (!games.length) {
+    el.innerHTML = `<div class="lobby-empty">No games yet — be the first to host!</div>`;
+    return;
+  }
+  el.innerHTML = games.map(g => `
+    <div class="lobby-game">
+      <div>
+        <div class="lobby-game-name">${esc(g.hostName)}</div>
+        <div class="lobby-game-count">1 / 2 players</div>
+      </div>
+      <button class="btn-green lobby-join-btn" onclick="mpJoin('${esc(g.id)}')">Join</button>
+    </div>`).join('');
 }
 
 function showDisconnectOverlay() {

@@ -2,7 +2,7 @@ const http = require('http');
 const fs   = require('fs');
 const path = require('path');
 const os   = require('os');
-const { WebSocketServer } = require('ws');
+const { WebSocketServer, WebSocket } = require('ws');
 
 const PORT = process.env.PORT || 3000;
 
@@ -33,59 +33,83 @@ const server = http.createServer((req, res) => {
 // ── WebSocket server ──────────────────────────────────────
 const wss = new WebSocketServer({ server });
 
-// Only one room at a time: { host: ws, joiner: ws|null }
-let room = null;
+// rooms: Map of roomId → { id, host: ws, joiner: ws|null, hostName: string }
+const rooms = new Map();
+// lobbyClients: clients currently watching the lobby
+const lobbyClients = new Set();
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function broadcastLobby() {
+  const games = [];
+  for (const [id, room] of rooms) {
+    if (!room.joiner) games.push({ id, hostName: room.hostName });
+  }
+  const msg = JSON.stringify({ type: 'lobby_state', games });
+  for (const ws of lobbyClients) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+  }
+}
 
 wss.on('connection', ws => {
+  ws.roomId = null;
   ws.isHost = false;
-  ws.inRoom = false;
 
   ws.on('message', raw => {
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
 
-    // ── Lobby handshakes ──────────────────────────────────
-    if (msg.type === 'host') {
-      // Close any previous room
-      if (room) {
-        if (room.host  && room.host  !== ws) try { room.host.close();   } catch {}
-        if (room.joiner && room.joiner !== ws) try { room.joiner.close(); } catch {}
-      }
-      room = { host: ws, joiner: null };
-      ws.isHost    = true;
-      ws.inRoom    = true;
-      ws.hostName  = msg.name || '';
-      ws.send(JSON.stringify({ type: 'hosting', ip: getLocalIP(), port: PORT }));
+    // ── Subscribe to lobby ────────────────────────────────
+    if (msg.type === 'lobby') {
+      lobbyClients.add(ws);
+      broadcastLobby(); // send current state immediately to this client
       return;
     }
 
+    // ── Host a new game ───────────────────────────────────
+    if (msg.type === 'host') {
+      lobbyClients.delete(ws);
+      // Clean up any previous room this socket was hosting
+      if (ws.roomId && ws.isHost) rooms.delete(ws.roomId);
+      const id = uid();
+      rooms.set(id, { id, host: ws, joiner: null, hostName: msg.name || 'Anonymous' });
+      ws.roomId = id;
+      ws.isHost = true;
+      ws.send(JSON.stringify({ type: 'hosting', roomId: id }));
+      broadcastLobby();
+      return;
+    }
+
+    // ── Join a specific game ──────────────────────────────
     if (msg.type === 'join') {
+      lobbyClients.delete(ws);
+      const room = rooms.get(msg.roomId);
       if (!room) {
-        ws.send(JSON.stringify({ type: 'error', msg: 'No host is waiting.' }));
+        ws.send(JSON.stringify({ type: 'error', msg: 'Game not found — it may have been cancelled.' }));
         return;
       }
       if (room.joiner) {
-        ws.send(JSON.stringify({ type: 'error', msg: 'Room is already full.' }));
+        ws.send(JSON.stringify({ type: 'error', msg: 'Game is already full.' }));
         return;
       }
       room.joiner = ws;
+      ws.roomId   = msg.roomId;
       ws.isHost   = false;
-      ws.inRoom   = true;
-      // Notify both players, exchanging names
+      // Notify both players of each other's name
       room.host.send(JSON.stringify({ type: 'player_joined', joinerName: msg.name || '' }));
-      ws.send(JSON.stringify({ type: 'join_ok', hostName: room.host.hostName || '' }));
-      return;
-    }
-
-    if (msg.type === 'start') {
-      if (!ws.isHost || !room || !room.joiner) return;
+      ws.send(JSON.stringify({ type: 'join_ok', hostName: room.hostName }));
+      broadcastLobby(); // room is now full — remove from lobby
+      // Auto-start
       const startMsg = JSON.stringify({ type: 'game_start' });
       room.host.send(startMsg);
-      room.joiner.send(startMsg);
+      ws.send(startMsg);
       return;
     }
 
     // ── Relay everything else to the other player ─────────
+    const room = ws.roomId ? rooms.get(ws.roomId) : null;
     if (!room) return;
     const other = ws.isHost ? room.joiner : room.host;
     if (other && other.readyState === WebSocket.OPEN) {
@@ -94,19 +118,20 @@ wss.on('connection', ws => {
   });
 
   ws.on('close', () => {
+    lobbyClients.delete(ws);
+    if (!ws.roomId) return;
+    const room = rooms.get(ws.roomId);
     if (!room) return;
-    const wasHost   = ws.isHost;
-    const other     = wasHost ? room.joiner : room.host;
-
+    const other = ws.isHost ? room.joiner : room.host;
     if (other && other.readyState === WebSocket.OPEN) {
       other.send(JSON.stringify({ type: 'opponent_disconnected' }));
     }
-
-    if (wasHost) {
-      room = null; // host leaving destroys the room
-    } else if (room) {
-      room.joiner = null; // joiner leaving clears the slot
+    if (ws.isHost) {
+      rooms.delete(ws.roomId); // host leaving destroys the room
+    } else {
+      room.joiner = null; // joiner leaving reopens the slot
     }
+    broadcastLobby();
   });
 });
 
