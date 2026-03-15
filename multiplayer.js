@@ -19,13 +19,18 @@ function mpSend(msg) {
 
 function mpOpenWS(onOpen) {
   if (MP.ws) { try { MP.ws.close(); } catch {} }
-  const url = `wss://${location.host}`;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const url = `${proto}://${location.host}`;
   const ws  = new WebSocket(url);
   MP.ws     = ws;
   ws.onopen    = onOpen;
   ws.onmessage = e => handleMPMessage(JSON.parse(e.data));
-  ws.onerror   = ()  => mpSetStatus('Could not connect to server.', 'err');
-  ws.onclose   = ()  => { if (MP.connected && MP.active) showDisconnectOverlay(); };
+  ws.onerror   = () => {
+    mpSetStatus('Could not connect to server.', 'err');
+    const lb = document.getElementById('lobby-games');
+    if (lb) lb.innerHTML = `<div class="lobby-empty" style="color:#ef9a9a;">Could not reach server.</div>`;
+  };
+  ws.onclose   = () => { if (MP.connected && MP.active) showDisconnectOverlay(); };
 }
 
 function mpSetStatus(text, cls) {
